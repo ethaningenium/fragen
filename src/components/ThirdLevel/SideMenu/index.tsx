@@ -59,7 +59,7 @@ const SideMenu = () => {
         router.replace('/auth/login');
       }
     }
-  }, [user]);
+  }, [user,router,setUser]);
 
   return (
     <div className="h-screen flex flex-col py-4 px-6 justify-between shadow-2xl shadow-slate-950/10 z-10">

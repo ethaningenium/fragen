@@ -1,26 +1,61 @@
-'use client';
+"use client";
 
-import { getaxioswh } from '@/lib/axios';
-import { quizUpdateType } from '@/lib/type/quizdata';
-import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'next/navigation';
-import React from 'react';
-
-async function getQuizEdit(id: string) {
-  const token = window.localStorage.getItem('token');
-  if(!token)return
-  const axios = getaxioswh(token);
-  const data = await axios.get(`/quiz/${id}`);
-  return data.data as quizUpdateType;
-}
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import EditTopMenu from "@/components/SecondLevel/EditTopmenu";
+import React, { useEffect, useState } from "react";
+import { getQuizEdit } from "./getQuiz";
+import Title from "@/components/SecondLevel/EditTitle";
+import { update, updateType } from "./updateQuiz";
+import { Button } from "@/components/ui/button";
 
 const EditPage = () => {
   const { quizId } = useParams();
-  const { data } = useQuery({
-    queryKey: ['edit'],
-    queryFn: async()=>{if(typeof quizId === 'string'){ return getQuizEdit(quizId)}},
+  const [title, setTitle] = useState({
+    title: "",
+    description: "",
   });
-  return <div>{data?.title}</div>;
+
+  const { data, isError, isLoading } = useQuery({
+    queryKey: ["edit"],
+    queryFn: async () => {
+      if (typeof quizId === "string") {
+        return getQuizEdit(quizId);
+      }
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  const mutation = useMutation({
+    mutationKey: ["update"],
+    mutationFn: async (elem: updateType) => {
+      return update(elem);
+    },
+  });
+  useEffect(() => {
+    setTitle({
+      title: data?.title || "",
+      description: data?.description || "",
+    });
+  }, [data]);
+  return (
+    <div className="w-full bg-slate-100 min-h-screen">
+      <EditTopMenu />
+      <Button
+        onClick={() => {
+          if (typeof quizId === "string") {
+            mutation.mutate({ id: quizId, ...title });
+          }
+        }}
+      >
+        {mutation.isPending ? "Updating" : "Update"}
+      </Button>
+      {mutation.isSuccess && <h1>Success</h1>}
+      <div className="p-8 flex flex-col gap-6 items-center">
+        <Title data={title} setData={setTitle} />
+      </div>
+    </div>
+  );
 };
 
 export default EditPage;
